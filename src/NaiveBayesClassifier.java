@@ -4,13 +4,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class NaiveBayesClassifier {
 	
 	HashMap<String, Float> priorProbability = new HashMap<String, Float>();
 	
+	// save probabilities as mapping from String to mapping of String to Float
+	// Target Class -> (Attribute -> nOccurrence)
 	HashMap<String, HashMap<String, Float>> buyingProbability = new HashMap<String, HashMap<String, Float>>();
 	HashMap<String, HashMap<String, Float>> maintProbability = new HashMap<String, HashMap<String, Float>>();
 	HashMap<String, HashMap<String, Float>> doorsProbability = new HashMap<String, HashMap<String, Float>>();
@@ -18,6 +22,7 @@ public class NaiveBayesClassifier {
 	HashMap<String, HashMap<String, Float>> lugboatProbability = new HashMap<String, HashMap<String, Float>>();
 	HashMap<String, HashMap<String, Float>> safetyProbability = new HashMap<String, HashMap<String, Float>>();
 	
+	// increment value of given <attribute,target>
 	public void addAttribute(HashMap<String, HashMap<String, Float>> map, String targetClass, String attributeValue){
 		HashMap<String, Float> pAttributeTarget = map.get(targetClass);
 		if (pAttributeTarget == null) {
@@ -28,6 +33,7 @@ public class NaiveBayesClassifier {
 		pAttributeTarget.put(attributeValue, pAttributeValue + 1);
 	}
 	
+	// transform occurrences to probabilities
 	public void fixAttributeProbability(HashMap<String, HashMap<String, Float>> map, String targetClass, float n){
 		HashMap<String, Float> pAttributeTarget = map.get(targetClass);
 		
@@ -39,17 +45,17 @@ public class NaiveBayesClassifier {
 		}
 	}
 	
-	public NaiveBayesClassifier(ArrayList<TrainingDataItem> items){
+	public NaiveBayesClassifier(List<TrainingDataItem> trainingData){
 		
-		// 1. getting occurrences
+		// traverse all and calculate occurrences
 		int n = 0;
-		for (TrainingDataItem item:items){
-			
+		for (TrainingDataItem item:trainingData){	
 			String targetClass = item.getTargetClass();
 			Float t = priorProbability.getOrDefault(targetClass, 0f);
 			priorProbability.put(targetClass, t + 1);
 			n++;
 			
+			// for each attribute: increment
 			addAttribute(buyingProbability, targetClass, item.getBuying());
 			addAttribute(maintProbability, targetClass, item.getMaint());
 			addAttribute(doorsProbability, targetClass, item.getDoors());
@@ -58,7 +64,7 @@ public class NaiveBayesClassifier {
 			addAttribute(safetyProbability, targetClass, item.getSafety());
 		}
 		
-		// 2. calculating the probabilities with the help of the different number of occurrences
+		// transform occurrences to probabilities
 		for (String targetClass: priorProbability.keySet()){
 			fixAttributeProbability(buyingProbability, targetClass, priorProbability.get(targetClass));
 			fixAttributeProbability(maintProbability, targetClass, priorProbability.get(targetClass));
@@ -75,7 +81,7 @@ public class NaiveBayesClassifier {
 		String best = null;
 		float bestF = -1;
 		
-		// all targets
+		// traverse over all targets
 		for(String key: priorProbability.keySet()){
 			float p;
 			try{
@@ -90,10 +96,9 @@ public class NaiveBayesClassifier {
 				
 				p = priorProbability.get(key) * pBuy * pMaint * pDoors * pPersons * pLugboat * pSafety;
 			} catch (Exception e){
+				// should never occur
 				p = 0;
-				System.out.println("LALA");
 			}
-//			System.out.println(p);
 			if (p > bestF) {
 				bestF = p;
 				best = key;
@@ -102,6 +107,7 @@ public class NaiveBayesClassifier {
 		return best;
 	}
 	
+	// print some debug output
 	public void print(){
 		for (String key : priorProbability.keySet()){
 			System.out.println(key + " " + priorProbability.get(key));
@@ -145,17 +151,17 @@ public class NaiveBayesClassifier {
 		
 	}
 
-	public double testAgainstTestItems(ArrayList<TrainingDataItem> items){
+	// returns accuracy of classifier
+	public double testAgainstTestItems(List<TrainingDataItem> testData){
 		int fails = 0;
-		for(TrainingDataItem i: items) {
+		for(TrainingDataItem i: testData) {
 			if (!classify(i).equals(i.getTargetClass()))
 				fails++;
 		}
-		System.out.println(fails);
-		System.out.println(items.size());
-		return 1 - fails / (double) items.size();
+		return 1 - fails / (double) testData.size();
 	}
 	
+	// read data from path
 	public static ArrayList<TrainingDataItem> readData(String path){
 		ArrayList<TrainingDataItem> items = new  ArrayList<TrainingDataItem>();
 
@@ -192,15 +198,30 @@ public class NaiveBayesClassifier {
 	
 	public static void main(String[] args) {
 		
-		// 1. reading data from file
+		// reading data from file
 		ArrayList<TrainingDataItem> items = readData("car.data");
 		
-	    // 2. build classifier
-	    NaiveBayesClassifier nbc = new NaiveBayesClassifier(items);
-//	    nbc.print();
-	    
-	    // 3. test against test data
-	    System.out.println("Accuracy: " + nbc.testAgainstTestItems(items) * 100 + " %");
- 	    
+		int runs = 100;
+		double summedError = 0;
+		for(int i = 0; i < runs; i++) {
+
+			// shuffle list
+			Collections.shuffle(items);
+			int split = (int) ( items.size() * 2/3f);
+			
+			// return first 2/3 to the training data 
+			List<TrainingDataItem> trainingData =  items.subList(0, split);
+			
+			// last 1/3 to test data
+			List<TrainingDataItem> testData =  items.subList(split, items.size() - 1);
+			
+		    // build classifier
+		    NaiveBayesClassifier nbc = new NaiveBayesClassifier(trainingData);
+		    
+		    // test against test data
+		    summedError += nbc.testAgainstTestItems(testData);
+		}
+		
+		System.out.println("Summed Mean Error: " + summedError / runs * 100 + "%");
 	}
 }
