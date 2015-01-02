@@ -145,12 +145,21 @@ public class NaiveBayesClassifier {
 		
 	}
 
-	public static void main(String[] args) {
-		
-		// 1. reading data from file
+	public double testAgainstTestItems(ArrayList<TrainingDataItem> items){
+		int fails = 0;
+		for(TrainingDataItem i: items) {
+			if (!classify(i).equals(i.getTargetClass()))
+				fails++;
+		}
+		System.out.println(fails);
+		System.out.println(items.size());
+		return 1 - fails / (double) items.size();
+	}
+	
+	public static ArrayList<TrainingDataItem> readData(String path){
 		ArrayList<TrainingDataItem> items = new  ArrayList<TrainingDataItem>();
 
-		File file = new File("car.data");
+		File file = new File(path);
 	    BufferedReader reader = null;
 	       
 	    try {
@@ -178,29 +187,20 @@ public class NaiveBayesClassifier {
 	            e.printStackTrace();
 	        }
 	    }
-	    
+	    return items;
+	}
+	
+	public static void main(String[] args) {
+		
+		// 1. reading data from file
+		ArrayList<TrainingDataItem> items = readData("car.data");
+		
+	    // 2. build classifier
 	    NaiveBayesClassifier nbc = new NaiveBayesClassifier(items);
-	    nbc.print();
+//	    nbc.print();
 	    
-    	int s = 0;
-    	int f = 0;
-//    	System.out.println(nbc.classify(items.get(2)));
-	    for(TrainingDataItem item: items) {
-	    	String c = nbc.classify(item);
-	    	String d = item.getTargetClass();	
-
-	    	if( c.equals(d) ) {
-//	    		System.out.println("success");
-	    		s++;
-	    	}
-	    	else {
-//	    		System.out.println("Fail");
-		    	System.out.println(s+ " " +c + " " + d);
-		    	f++;
-
-	    	}
-	    }
-	    System.out.println((float) s / (s+f) * 100 + "% Accuracy");
+	    // 3. test against test data
+	    System.out.println("Accuracy: " + nbc.testAgainstTestItems(items) * 100 + " %");
  	    
 	}
 }
