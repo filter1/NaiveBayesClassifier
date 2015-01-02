@@ -161,6 +161,18 @@ public class NaiveBayesClassifier {
 		return 1 - fails / (double) testData.size();
 	}
 	
+	public void printConfusionMatrix(List<TrainingDataItem> items) {
+		HashMap<String, Integer> map = new HashMap<String, Integer>();
+		for(TrainingDataItem i: items) {
+			String key = classify(i) + " -> " + i.getTargetClass();
+			map.put(key, map.getOrDefault(key, 0) + 1);
+		}
+		
+		for (String key: map.keySet()) {
+			System.out.println(key + ": " + map.get(key));
+		}
+	}
+	
 	// read data from path
 	public static ArrayList<TrainingDataItem> readData(String path){
 		ArrayList<TrainingDataItem> items = new  ArrayList<TrainingDataItem>();
@@ -220,6 +232,9 @@ public class NaiveBayesClassifier {
 		    
 		    // test against test data
 		    summedError += nbc.testAgainstTestItems(testData);
+		    
+		    // only at last run
+		    if (i == runs - 1) nbc.printConfusionMatrix(testData);
 		}
 		
 		System.out.println("Summed Mean Error: " + summedError / runs * 100 + "%");
