@@ -219,6 +219,8 @@ public class NaiveBayesClassifier {
 
 			// shuffle list
 			Collections.shuffle(items);
+			
+			// where to split the data: here 2/3
 			int split = (int) ( items.size() * 2/3f);
 			
 			// return first 2/3 to the training data 

@@ -1,6 +1,6 @@
 // represents one 'row' of the given data.
 public class TrainingDataItem {
-	String buying, maint, doors, persons, lug_boot, safety, targetClass;
+	private String buying, maint, doors, persons, lug_boot, safety, targetClass;
 
 	public TrainingDataItem(String str) {
 		String[] a = str.split(",");
