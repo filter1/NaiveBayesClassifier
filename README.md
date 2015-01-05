@@ -1,9 +1,11 @@
-Team: Franz Kuntke, Johannes Filter
-
 NaiveBayesClassifier
 ====================
 
 Naive Bayes Classifier for data set at http://archive.ics.uci.edu/ml/datasets/Car+Evaluation
+
+Team
+----
+Franz Kuntke, Johannes Filter
 
 Basic Idea
 ----------
@@ -15,7 +17,7 @@ Basic Idea
 6. Test against test data and save error
 
 * Repeat Steps 2. to 6. and sum up error
-
+* Check out the commented code for more details.
 
 Evaluation
 ----------
